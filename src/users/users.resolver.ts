@@ -21,6 +21,7 @@ export class UsersResolver {
     @Args('input') createAccountInput: CreateAccountInput,
   ): Promise<CreateAccountOutput> {
     try {
+      //이런식으로 사용할 수도 있음.
       const [ok, error] = await this.usersService.createAccount(
         createAccountInput,
       );
@@ -47,4 +48,7 @@ export class UsersResolver {
       };
     }
   }
+
+  @Query((returns) => User)
+  me() {}
 }

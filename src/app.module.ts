@@ -9,6 +9,7 @@ import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { CommonModule } from './common/common.module';
+import { JwtModule } from './jwt/jwt.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,6 +23,7 @@ import { CommonModule } from './common/common.module';
         DB_USERNAME: Joi.string().required(),
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
+        PRIVATE_KEY: Joi.string().required(), //token을 지정하기 위해 사용하는 privatekey이다.
       }),
     }),
     TypeOrmModule.forRoot({
@@ -36,11 +38,15 @@ import { CommonModule } from './common/common.module';
       entities: [User],
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
+      //forroot는 동적인 모듈. 설정이 적용되어있는 모듈 밑처럼.
       driver: ApolloDriver,
       autoSchemaFile: true,
     }),
-    UsersModule,
+    UsersModule, //정적인 모듈 = static모듈
     CommonModule,
+    JwtModule.forRoot({
+      privateKey: process.env.PRIVATE_KEY,
+    }),
   ],
   controllers: [],
   providers: [],
