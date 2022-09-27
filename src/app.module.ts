@@ -16,6 +16,7 @@ import { User } from './users/entities/user.entity';
 import { CommonModule } from './common/common.module';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -47,9 +48,9 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
       //forroot는 동적인 모듈. 설정이 적용되어있는 모듈 밑처럼.
       driver: ApolloDriver,
       autoSchemaFile: true,
+      context: ({ req }) => ({ user: req['user'] }),
     }),
     UsersModule, //정적인 모듈 = static모듈
-    CommonModule,
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
@@ -62,7 +63,7 @@ export class AppModule implements NestModule {
     consumer.apply(JwtMiddleware).forRoutes({
       //jwt middleware 연결한거임. 그게 뭔데 아 아무튼 그런거임.
       path: '*', //graphql이라는 라우터에만 할당 가능
-      method: RequestMethod.ALL,
+      method: RequestMethod.POST,
     });
   }
 }
