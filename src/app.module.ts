@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import * as Joi from 'joi';
 import { GraphQLModule } from '@nestjs/graphql';
 import { RestaurantsModule } from './restaurants/restaurants.module';
@@ -9,6 +14,9 @@ import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { CommonModule } from './common/common.module';
+import { JwtModule } from './jwt/jwt.module';
+import { JwtMiddleware } from './jwt/jwt.middleware';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,6 +30,7 @@ import { CommonModule } from './common/common.module';
         DB_USERNAME: Joi.string().required(),
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
+        PRIVATE_KEY: Joi.string().required(), //token을 지정하기 위해 사용하는 privatekey이다.
       }),
     }),
     TypeOrmModule.forRoot({
@@ -36,13 +45,25 @@ import { CommonModule } from './common/common.module';
       entities: [User],
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
+      //forroot는 동적인 모듈. 설정이 적용되어있는 모듈 밑처럼.
       driver: ApolloDriver,
       autoSchemaFile: true,
+      context: ({ req }) => ({ user: req['user'] }),
     }),
-    UsersModule,
-    CommonModule,
+    UsersModule, //정적인 모듈 = static모듈
+    JwtModule.forRoot({
+      privateKey: process.env.PRIVATE_KEY,
+    }),
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtMiddleware).forRoutes({
+      //jwt middleware 연결한거임. 그게 뭔데 아 아무튼 그런거임.
+      path: '*', //graphql이라는 라우터에만 할당 가능
+      method: RequestMethod.POST,
+    });
+  }
+}
