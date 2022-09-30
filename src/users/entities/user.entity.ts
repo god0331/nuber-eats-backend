@@ -5,7 +5,7 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { object } from 'joi';
-import { BeforeInsert, Column, Entity } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CoreEntity } from '../../common/enstities/core.entity';
 import { InternalServerErrorException } from '@nestjs/common';
@@ -40,6 +40,9 @@ export class User extends CoreEntity {
   @IsEnum(UserRole)
   role: UserRole;
 
+  @Column({ default: false })
+  @Field((type) => Boolean)
+  verified: boolean;
   //특정 event 기반한 함수들을 불러주는 데코레이터이다.
   //listeners관련 문서 참고 바람.
   //즉 이 beforeInsert함수는 이렇다. entity가 저장소에 insert되기 전에 처리한다는 뜻이다.
@@ -47,6 +50,7 @@ export class User extends CoreEntity {
   //bcrypt는 hash처리하기에 좋은 모듈이다.
   //create 함수로 instance를 만들면 이 코드가 실행된 후 save함수가 실행된다.
   @BeforeInsert()
+  @BeforeUpdate()
   async hashPassword(): Promise<void> {
     try {
       //뒤에 10은 10번 hash 처리를 한다는 뜻이다.

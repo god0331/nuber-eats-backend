@@ -6,11 +6,15 @@ import { CreateAccountInput } from './dtos/create-account.dto';
 import { LoginInput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '../jwt/jwt.service';
+import { EditProFileInput } from './dtos/edit-profile.dto';
+import { Verification } from './entities/verification.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(Verification)
+    private readonly verifications: Repository<Verification>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -30,7 +34,14 @@ export class UsersService {
         //에러를 throw하는 것과 return 하는 것의 차이점이 있음. throw 는 스레드를 종료 시켜서 return이 필요없음.
         return [false, 'There is a user with that eamil already'];
       }
-      await this.users.save(this.users.create({ email, password, role }));
+      const user = await this.users.save(
+        this.users.create({ email, password, role }),
+      );
+      await this.verifications.save(
+        this.verifications.create({
+          user,
+        }),
+      );
       return [true];
     } catch (e) {
       return [false, "Couldn't create account"];
@@ -78,5 +89,34 @@ export class UsersService {
 
   async findById(id: number): Promise<User> {
     return this.users.findOne({ where: { id } });
+  }
+
+  async editProfile(
+    userId: number,
+    { email, password }: EditProFileInput,
+  ): Promise<User> {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (email) {
+      user.email = email;
+      user.verified = false; //email은 default 가 false임..
+      await this.verifications.save(this.verifications.create({ user }));
+    }
+    if (password) {
+      user.password = password;
+    }
+    return this.users.save(user);
+  }
+
+  async verifyEamil(code: string): Promise<boolean> {
+    const verification = await this.verifications.findOne({
+      where: { code },
+      relations: ['user'],
+    });
+    if (verification) {
+      verification.user.verified = true;
+      this.users.save(verification.user);
+    }
+
+    return false;
   }
 }

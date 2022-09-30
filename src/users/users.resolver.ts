@@ -1,13 +1,16 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { verify } from 'crypto';
 import { AuthUser } from '../auth/auth-user.decorator';
 import { AuthGuard } from '../auth/auth.guard';
 import {
   CreateAccountInput,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
+import { EditProFileInput, EditProFileOutput } from './dtos/edit-profile.dto';
 import { LoginInput, LoginOutput } from './dtos/login.dto';
 import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
+import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
@@ -74,5 +77,30 @@ export class UsersResolver {
         ok: false,
       };
     }
+  }
+
+  //authuser는 현재 login 한 사용자에 대한 정보를 줌.
+  @UseGuards(AuthGuard)
+  @Mutation((returns) => EditProFileOutput)
+  async editProfile(
+    @AuthUser() authUser: User,
+    @Args('input') editProFileInput: EditProFileInput,
+  ): Promise<EditProFileOutput> {
+    try {
+      await this.usersService.editProfile(authUser.id, editProFileInput);
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
+  }
+
+  @Mutation((retuns) => VerifyEmailOutput)
+  verifyEmail(@Args('input') { code }: VerifyEmailInput) {
+    this.usersService.verifyEamil(code);
   }
 }
