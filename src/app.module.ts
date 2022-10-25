@@ -18,6 +18,7 @@ import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { Verification } from './users/entities/verification.entity';
+import { Category } from './restaurants/entities/category.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -43,7 +44,7 @@ import { Verification } from './users/entities/verification.entity';
       database: process.env.DB_NAME,
       synchronize: process.env.NODE_ENV !== 'prod',
       logging: process.env.NODE_ENV !== 'prod',
-      entities: [User, Verification],
+      entities: [User, Verification, Restaurant, Category],
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       //forroot는 동적인 모듈. 설정이 적용되어있는 모듈 밑처럼.
@@ -55,6 +56,7 @@ import { Verification } from './users/entities/verification.entity';
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
+    RestaurantsModule,
   ],
   controllers: [],
   providers: [],

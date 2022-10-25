@@ -5,11 +5,18 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { object } from 'joi';
-import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CoreEntity } from '../../common/enstities/core.entity';
 import { InternalServerErrorException } from '@nestjs/common';
-import { IsEmail, IsEnum, IsString, isString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsString,
+  isString,
+} from 'class-validator';
+import { Restaurant } from '../../restaurants/entities/restaurant.entity';
 
 //열거형
 enum UserRole {
@@ -21,7 +28,7 @@ enum UserRole {
 //graphQl
 registerEnumType(UserRole, { name: 'UserRole' });
 
-@InputType({ isAbstract: true })
+@InputType('UserInputType', { isAbstract: true })
 @ObjectType()
 @Entity()
 export class User extends CoreEntity {
@@ -32,6 +39,7 @@ export class User extends CoreEntity {
 
   @Column({ select: false })
   @Field((type) => String)
+  @IsString()
   password: string;
 
   //열거형 사용법
@@ -42,7 +50,13 @@ export class User extends CoreEntity {
 
   @Column({ default: false })
   @Field((type) => Boolean)
+  @IsBoolean()
   verified: boolean;
+
+  @Field((type) => [Restaurant])
+  @OneToMany((type) => Restaurant, (restaurant) => restaurant.owner)
+  restaurants: Restaurant[];
+
   //특정 event 기반한 함수들을 불러주는 데코레이터이다.
   //listeners관련 문서 참고 바람.
   //즉 이 beforeInsert함수는 이렇다. entity가 저장소에 insert되기 전에 처리한다는 뜻이다.
